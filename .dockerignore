@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.vitest
+**/.env
+server/data
+.git
+.github
+*.log
+Dockerfile
+docker-compose.yml
