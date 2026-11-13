@@ -49,5 +49,5 @@ docker compose up -d
 - Interface : `http://<ip-du-homelab>:3000` (port modifiable via `AYBOT_PORT`).
 - Mise à jour : `docker compose pull && docker compose up -d`.
 - Données persistées dans le volume nommé `aybot-data` (`/data/subscriptions.json`). Sauvegarde : `docker compose cp aybot:/data/subscriptions.json ./backup.json`.
-- Derrière un reverse proxy (Traefik, Caddy, Nginx Proxy Manager…), pointer vers le port 3000 du conteneur. Définir `ADMIN_PASSWORD` si l'interface est accessible hors du réseau local.
+- Derrière un reverse proxy (Traefik, Caddy, Nginx Proxy Manager…), pointer vers le port 3000 du conteneur. L'interface n'a **aucune authentification** : ne l'exposer que sur un réseau de confiance (VPN).
 - Build local de l'image : `docker build -t aybot-discord .`

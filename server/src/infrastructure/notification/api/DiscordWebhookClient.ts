@@ -15,7 +15,8 @@ export class DiscordWebhookClient implements NotificationGateway {
         response = await fetch(webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          // Les titres viennent de tiers : empêche tout @everyone/@here/rôle injecté.
+          body: JSON.stringify({ ...payload, allowed_mentions: { parse: [] } }),
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
       } catch (error) {

@@ -19,7 +19,7 @@ CI : `.github/workflows/ci.yml` → lint, format:check, typecheck, test, build (
 
 - `Dockerfile` multi-stage `node:24-alpine` : `build` (npm ci + `npm run build`), `deps` (`npm ci --omit=dev --workspace server --include-workspace-root=false`), image finale non-root (`USER node`, uid 1000), `WORKDIR /app/server`, front copié dans `/app/web/dist`.
 - Env figées dans l'image : `DATA_FILE=/data/subscriptions.json`, `WEB_DIST_DIR=/app/web/dist`, `PORT=3000`. `HEALTHCHECK` → `GET /healthz`.
-- `docker-compose.yml` : service `aybot` sur l'image `ghcr.io/aymericlefeyer/aybot-discord:latest` (pas de `build:`), volume nommé `aybot-data:/data`, `init: true`, `restart: unless-stopped`, logs json-file 10m×3. Variables via `.env` racine (`.env.example`) : `AYBOT_PORT`, `POLL_INTERVAL_MINUTES`, `ADMIN_PASSWORD`.
+- `docker-compose.yml` : service `aybot` sur l'image `ghcr.io/aymericlefeyer/aybot-discord:latest` (pas de `build:`), volume nommé `aybot-data:/data`, `init: true`, `restart: unless-stopped`, logs json-file 10m×3. Variables via `.env` racine (`.env.example`) : `AYBOT_PORT`, `POLL_INTERVAL_MINUTES`.
 - CI : job `docker` (après `check`) → build `linux/amd64,linux/arm64` ; push GHCR sur `main` (`latest`, `sha-<commit>`) et tags `v*` (`X.Y.Z`, `X.Y`) ; PR = build seul. Auth via `GITHUB_TOKEN` (`packages: write`).
 - Multi-arch sans QEMU : étapes `build`/`deps` en `--platform=$BUILDPLATFORM`, étape finale **sans aucun `RUN`** (`/data` créé dans `deps` puis `COPY --chown`). Ajouter un `RUN` dans l'étape finale ou une dépendance native côté serveur casserait ce principe.
 
@@ -31,13 +31,12 @@ CI : `.github/workflows/ci.yml` → lint, format:check, typecheck, test, build (
 
 ## Configuration serveur (`server/.env`, voir `.env.example`)
 
-| Variable                | Défaut                      | Rôle                                                               |
-| ----------------------- | --------------------------- | ------------------------------------------------------------------ |
-| `PORT`                  | 3000                        | Port HTTP                                                          |
-| `POLL_INTERVAL_MINUTES` | 5                           | Intervalle du poller                                               |
-| `DATA_FILE`             | `./data/subscriptions.json` | Stockage JSON (relatif au cwd = `server/`)                         |
-| `ADMIN_PASSWORD`        | vide                        | Si défini : HTTP Basic Auth sur tout (UI + API), utilisateur libre |
-| `WEB_DIST_DIR`          | `../web/dist`               | Front servi en statique                                            |
+| Variable                | Défaut                      | Rôle                                       |
+| ----------------------- | --------------------------- | ------------------------------------------ |
+| `PORT`                  | 3000                        | Port HTTP                                  |
+| `POLL_INTERVAL_MINUTES` | 5                           | Intervalle du poller                       |
+| `DATA_FILE`             | `./data/subscriptions.json` | Stockage JSON (relatif au cwd = `server/`) |
+| `WEB_DIST_DIR`          | `../web/dist`               | Front servi en statique                    |
 
 ## Domaines DDD — server (`server/src`)
 
@@ -73,7 +72,7 @@ CI : `.github/workflows/ci.yml` → lint, format:check, typecheck, test, build (
 
 | Méthode | Route                         | Body / Réponse                                                             |
 | ------- | ----------------------------- | -------------------------------------------------------------------------- |
-| GET     | `/healthz`                    | → `{ok: true}` — **hors Basic Auth** (healthcheck Docker)                  |
+| GET     | `/healthz`                    | → `{ok: true}` (healthcheck Docker)                                        |
 | GET     | `/api/status`                 | → `{intervalMinutes, running, lastRunAt, nextRunAt}`                       |
 | POST    | `/api/check`                  | lance une vérification et attend la fin → status ; 409 si déjà en cours    |
 | GET     | `/api/subscriptions`          | → `Subscription[]` (sans `knownVideoIds`)                                  |
@@ -107,8 +106,7 @@ Composants : `SubscriptionForm` (création, ou édition si `subscription` fourni
 - **Premières / lives programmés** apparaissent dans le RSS dès leur planification → notifiés à ce moment-là, pas au démarrage du live.
 - **Échec d'envoi Discord** : la vidéo n'est pas ajoutée à `knownVideoIds` → retentée au prochain passage ; un webhook supprimé produit donc une erreur (`lastError`) toutes les 5 min jusqu'à correction/pause.
 - **Éditer `subscriptions.json` à la main** pendant que le serveur tourne ne sert à rien : le repository garde un cache mémoire et réécrit le fichier. Arrêter le serveur avant.
-- **Pas d'auth par défaut** : exposer le serveur publiquement sans `ADMIN_PASSWORD` expose les URLs de webhook.
+- **Aucune authentification** (retirée volontairement, accès derrière VPN) : ne jamais exposer le serveur publiquement, l'API renvoie les URLs de webhook en clair.
 - **Docker, bind mount au lieu du volume nommé** : le conteneur tourne en uid 1000 → le dossier hôte doit être accessible en écriture par cet uid (`chown 1000:1000 ./data`), sinon `EACCES` à la création d'un abonnement.
-- **`/healthz` doit rester déclaré avant le middleware `basicAuth`** dans `createApp.ts`, sinon le healthcheck passe en 401 dès que `ADMIN_PASSWORD` est défini → conteneur `unhealthy`.
 - **Lockfile généré sous Windows** : il contient bien les binaires natifs linux-musl (rolldown, tailwind oxide, lightningcss) nécessaires au build alpine. Si `npm ci` casse dans Docker après une mise à jour de deps, régénérer le lockfile (bug npm connu sur les optional deps multi-plateformes).
 - ESLint `react-hooks` v7 : `Date.now()` pendant le rendu est interdit (`react-hooks/purity`) → passer par `useState(() => …)` ou `useNow`.

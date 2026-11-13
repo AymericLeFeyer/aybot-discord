@@ -28,7 +28,6 @@ const app = createApp({
   deleteSubscription: new DeleteSubscription(subscriptions),
   sendTestNotification: new SendTestNotification(subscriptions, youtube, discord),
   poller,
-  adminPassword: config.adminPassword,
   webDistDir: config.webDistDir,
 });
 

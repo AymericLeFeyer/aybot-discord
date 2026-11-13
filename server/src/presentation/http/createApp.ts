@@ -1,7 +1,6 @@
-import { timingSafeEqual } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import express, { type ErrorRequestHandler, type RequestHandler } from 'express';
+import express, { type ErrorRequestHandler } from 'express';
 import { z } from 'zod';
 import type { CreateSubscription } from '../../application/subscription/usecases/CreateSubscription.js';
 import type { DeleteSubscription } from '../../application/subscription/usecases/DeleteSubscription.js';
@@ -21,7 +20,6 @@ export interface AppDependencies {
   deleteSubscription: DeleteSubscription;
   sendTestNotification: SendTestNotification;
   poller: Poller;
-  adminPassword: string | null;
   webDistDir: string;
 }
 
@@ -50,31 +48,15 @@ function toDto({ knownVideoIds: _known, ...subscription }: Subscription) {
   return subscription;
 }
 
-function basicAuth(password: string): RequestHandler {
-  const expected = Buffer.from(password);
-  return (req, res, next) => {
-    const [scheme, encoded] = (req.headers.authorization ?? '').split(' ');
-    const provided = Buffer.from(
-      scheme === 'Basic' && encoded
-        ? Buffer.from(encoded, 'base64').toString().split(':').slice(1).join(':')
-        : '',
-    );
-    if (provided.length === expected.length && timingSafeEqual(provided, expected)) return next();
-    res.set('WWW-Authenticate', 'Basic realm="aybot"').status(401).send('Authentification requise');
-  };
-}
-
 export function createApp(deps: AppDependencies): express.Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '100kb' }));
 
-  // Healthcheck Docker : volontairement hors authentification, n'expose aucune donnée.
+  // Healthcheck Docker.
   app.get('/healthz', (_req, res) => {
     res.json({ ok: true });
   });
-
-  if (deps.adminPassword) app.use(basicAuth(deps.adminPassword));
 
   const api = express.Router();
 

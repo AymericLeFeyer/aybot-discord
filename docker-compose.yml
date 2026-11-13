@@ -8,7 +8,6 @@ services:
       - '${AYBOT_PORT:-3000}:3000'
     environment:
       POLL_INTERVAL_MINUTES: ${POLL_INTERVAL_MINUTES:-5}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     volumes:
       - aybot-data:/data
     logging:
