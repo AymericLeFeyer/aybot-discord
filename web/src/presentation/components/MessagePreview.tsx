@@ -38,9 +38,7 @@ export function MessagePreview({ template, values }: MessagePreviewProps) {
   return (
     <div className="rounded-lg border bg-muted/40 p-3">
       <div className="flex gap-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-500 text-sm font-semibold text-white">
-          A
-        </div>
+        <img src="/logo.svg" alt="" className="size-9 shrink-0 rounded-full" />
         <div className="min-w-0 text-sm">
           <div className="mb-0.5 flex items-baseline gap-2">
             <span className="font-medium">AyBot</span>

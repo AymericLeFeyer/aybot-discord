@@ -1,4 +1,4 @@
-import { BellRingIcon, Loader2Icon } from 'lucide-react';
+import { Loader2Icon } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CreateSubscriptionInput } from '@/domain/subscription/entities/Subscription';
 import { MonitorStatusBar } from '@/presentation/components/MonitorStatusBar';
@@ -41,9 +41,7 @@ export function HomePage() {
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-red-600 text-white">
-            <BellRingIcon className="size-5" />
-          </div>
+          <img src="/logo.svg" alt="" className="size-10" />
           <div>
             <h1 className="font-heading text-xl font-semibold">AyBot</h1>
             <p className="text-sm text-muted-foreground">
